@@ -33,6 +33,8 @@ ArcFlow AI 研发运营一体化平台的文档仓库。所有文档以 Markdown
 
 所有 .md 文件必须包含：
 
-- title、status（draft/active/deprecated）、owner、last_updated
+- title、status、owner、last_updated
+- PRD 的 status 枚举：draft / active / deprecated
 - PRD 额外需要：type（module/feature）、created、sprint
+- 技术设计文档的 status 枚举：draft / reviewed / approved
 - 技术设计文档额外需要：source_prd、generated_by、generated_at、reviewer
