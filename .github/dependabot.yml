@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # gateway 使用 Bun，但 Dependabot 尚不支持 bun.lockb，
+  # 此处使用 npm ecosystem 作为近似方案，仅监控 package.json 声明的依赖版本
+  - package-ecosystem: "npm"
+    directory: "/packages/gateway"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/packages/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

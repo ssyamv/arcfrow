@@ -1,0 +1,70 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main, develop, test]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  audit-gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+        working-directory: packages/gateway
+      - run: bun pm audit --level=high
+        working-directory: packages/gateway
+
+  audit-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+        working-directory: packages/web
+      - run: bun pm audit --level=high
+        working-directory: packages/web
+
+  license-check-gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: bun install
+        working-directory: packages/gateway
+      - run: |
+          npx license-checker --production --onlyAllow \
+            "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD"
+        working-directory: packages/gateway
+
+  license-check-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: bun install
+        working-directory: packages/web
+      - run: |
+          npx license-checker --production --onlyAllow \
+            "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD"
+        working-directory: packages/web
