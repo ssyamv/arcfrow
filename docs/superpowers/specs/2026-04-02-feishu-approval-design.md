@@ -53,16 +53,16 @@
       {
         "tag": "div",
         "fields": [
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**功能名称**\n用户注册登录系统" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**负责人**\n@张三" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**Plane Issue**\nISSUE-123" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**生成模型**\nclaude-opus-4-6" } }
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**功能名称**\n用户注册登录系统" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**负责人**\n@张三" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**Plane Issue**\nISSUE-123" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**生成模型**\nclaude-opus-4-6" } }
         ]
       },
       {
         "tag": "div",
         "text": {
-          "tag": "lm_md",
+          "tag": "lark_md",
           "content": "**文档链接**\n- [技术设计文档](http://wiki-url/tech-design/2026-04/feature-xxx)\n- [OpenAPI 规范](http://git-url/api/2026-04/feature-xxx.yaml)\n- [原始 PRD](http://wiki-url/prd/2026-04/feature-xxx)"
         }
       },
@@ -123,7 +123,8 @@
     - action.value.action（approve / reject）
     - action.value.issue_id
     - action.value.doc_path
-    - operator（点击按钮的飞书用户 ID）
+    - operator（点击按钮的飞书用户 open_id，位于 callback body 的 open_id 字段）
+  → 幂等检查：以 issue_id 为键查 SQLite，已处理则直接返回 200
   → approve:
     → Plane API: 更新 Issue 状态为下一阶段
     → 读取 PRD 设计稿字段判断是否触发 UI 代码生成
@@ -140,6 +141,7 @@
 | 要点 | 说明 |
 |------|------|
 | 按钮一次性 | 点击后更新卡片，按钮替换为操作结果文本，防止重复点击 |
+| 服务端幂等 | 胶水服务以 `issue_id` 为键做幂等检查（SQLite 记录已处理的审批操作），收到重复回调直接返回 200，防止并发点击或飞书重试导致重复触发代码生成 |
 | 操作人记录 | 从回调中提取飞书用户 ID，显示在卡片更新内容中，可追溯 |
 | 打回原因 | 第一版不做打回原因输入（飞书卡片交互能力有限），研发在 Wiki.js 或 Plane 中备注 |
 | 权限控制 | 第一版不限制谁能点按钮，群内任何人都可操作；后续可通过飞书用户 ID 白名单限制 |
@@ -170,6 +172,10 @@ Plane Issue：ISSUE-123
 已通知 PM 修改，修改后可重新提审。
 ```
 
+### 4.4 打回后重新提审流程
+
+PM 修改 PRD 后，在 Plane 中将 Issue 状态重新改为 `Approved`，胶水服务的 Plane Webhook 会再次触发工作流一二（与首次流程一致）。此流程由胶水服务的 Plane Webhook 处理（流程 A），本文档不再重复定义。
+
 ---
 
 ## 五、其他通知卡片模板
@@ -188,10 +194,10 @@ Plane Issue：ISSUE-123
       {
         "tag": "div",
         "fields": [
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**功能名称**\n用户注册登录系统" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**负责人**\n@张三" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**涉及仓库**\nbackend, vue3" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**Plane Issue**\nISSUE-123" } }
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**功能名称**\n用户注册登录系统" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**负责人**\n@张三" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**涉及仓库**\nbackend, vue3" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**Plane Issue**\nISSUE-123" } }
         ]
       },
       {
@@ -224,15 +230,15 @@ Plane Issue：ISSUE-123
       {
         "tag": "div",
         "fields": [
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**严重程度**\nP1 严重" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**关联 Issue**\nISSUE-123" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**仓库**\nbackend" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**处理方式**\nAI 自动修复中" } }
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**严重程度**\nP1 严重" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**关联 Issue**\nISSUE-123" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**仓库**\nbackend" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**处理方式**\nAI 自动修复中" } }
         ]
       },
       {
         "tag": "div",
-        "text": { "tag": "lm_md", "content": "**错误摘要**\nUserService.register() 中空指针异常，未校验 phone 参数为 null 的情况" }
+        "text": { "tag": "lark_md", "content": "**错误摘要**\nUserService.register() 中空指针异常，未校验 phone 参数为 null 的情况" }
       }
     ]
   }
@@ -253,15 +259,15 @@ Plane Issue：ISSUE-123
       {
         "tag": "div",
         "fields": [
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**严重程度**\nP1 严重" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**关联 Issue**\nISSUE-123" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**已尝试**\n2 次自动修复" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**需要**\n@研发TL 人工处理" } }
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**严重程度**\nP1 严重" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**关联 Issue**\nISSUE-123" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**已尝试**\n2 次自动修复" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**需要**\n@研发TL 人工处理" } }
         ]
       },
       {
         "tag": "div",
-        "text": { "tag": "lm_md", "content": "**失败原因**\n自动修复后测试仍未通过，错误模式与首次不同，需人工分析" }
+        "text": { "tag": "lark_md", "content": "**失败原因**\n自动修复后测试仍未通过，错误模式与首次不同，需人工分析" }
       }
     ]
   }
@@ -282,15 +288,15 @@ Plane Issue：ISSUE-123
       {
         "tag": "div",
         "fields": [
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**功能名称**\n用户注册登录系统" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**通知**\n@PM李四" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**打回人**\n张三" } },
-          { "is_short": true, "text": { "tag": "lm_md", "content": "**Plane Issue**\nISSUE-123" } }
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**功能名称**\n用户注册登录系统" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**通知**\n@PM李四" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**打回人**\n张三" } },
+          { "is_short": true, "text": { "tag": "lark_md", "content": "**Plane Issue**\nISSUE-123" } }
         ]
       },
       {
         "tag": "div",
-        "text": { "tag": "lm_md", "content": "请在 Wiki.js 或 Plane 中查看打回原因，修改 PRD 后重新将 Issue 状态改为 Approved。" }
+        "text": { "tag": "lark_md", "content": "请在 Wiki.js 或 Plane 中查看打回原因，修改 PRD 后重新将 Issue 状态改为 Approved。" }
       }
     ]
   }
@@ -316,3 +322,8 @@ Plane Issue：ISSUE-123
 |------|------|
 | FEISHU_CHAT_ID | 研发群的 Chat ID |
 | FEISHU_CARD_CALLBACK_URL | 卡片回调地址（即胶水服务的 /webhook/feishu） |
+
+### 运维注意事项
+
+- MR Review 卡片中的"查看 MR"按钮使用外链跳转，需在飞书管理后台将内部 Git 平台域名加入**外链白名单**，否则用户点击后会提示"无法打开链接"
+- Wiki.js 域名同样需要加入白名单（技术文档 Review 卡片中的文档链接）
