@@ -132,6 +132,7 @@ com.公司.项目
 - 所有数据库操作通过 Mapper 层，禁止在 Service 中直接写 SQL
 - 异常统一通过全局异常处理器捕获，不在 Controller 中 try-catch
 - 参数校验使用 @Valid + JSR 303 注解
+- 日志使用 SLF4J，注入方式 `@Slf4j`（Lombok），禁止使用 `System.out.println`
 ```
 
 ---
@@ -196,7 +197,7 @@ src/
 
 - 组件样式使用 `<style scoped>`，避免全局污染
 - 全局样式变量定义在 `src/styles/` 中
-- 优先使用 Tailwind CSS 工具类（如果项目已引入），其次使用 scoped CSS
+- 如果 package.json 中包含 tailwindcss 依赖，则优先使用 Tailwind CSS 工具类；否则使用 scoped CSS
 
 ## 代码规范
 
@@ -204,6 +205,13 @@ src/
 - 组合式函数命名以 `use` 开头，如 `useUserList`
 - 页面组件负责组装和布局，业务逻辑抽到 composables 中
 - 路由使用懒加载：`() => import('@/pages/xxx/index.vue')`
+
+## Figma MCP 使用规范
+
+- Claude Code 通过 Figma MCP Server 读取设计稿生成 UI 代码
+- Figma 组件优先映射到 Element Plus 组件，Element Plus 无法满足时映射到 shadcn-vue
+- 从 Figma 提取的颜色和间距应映射到项目已有的 CSS 变量 / Tailwind token，不使用硬编码值
+- 生成的代码必须遵守本文档中的组件规范和样式规范
 ```
 
 ---
@@ -278,6 +286,20 @@ View → Controller → API / Repository
 - Widget 拆分原则：超过 80 行的 build 方法必须拆分子 Widget
 - 页面级 Widget 放 `views/`，可复用组件放 `widgets/`
 - 常量统一定义在 `constants/` 中，禁止硬编码字符串和数字
+
+## 错误处理规范
+
+- 网络异常统一在 Dio 拦截器中转换为业务错误对象
+- Controller 中使用 try-catch 捕获异常，更新错误状态（如 `isError.value = true`）
+- 用户提示统一使用 `Get.snackbar()` 展示错误信息
+- loading 状态在 Controller 中通过 `isLoading.obs` 管理，View 层 `Obx()` 响应
+
+## Figma MCP 使用规范
+
+- Claude Code 通过 Figma MCP Server 读取设计稿生成 Flutter UI 代码
+- Figma 组件映射到 Flutter 原生 Widget 或项目 `widgets/` 中的自定义组件
+- 从 Figma 提取的颜色和间距应映射到 `app/theme/` 中定义的主题变量，不使用硬编码值
+- 生成的代码必须遵守本文档中的分层规范和代码规范
 ```
 
 ---
@@ -352,6 +374,7 @@ View（Activity/Fragment/Compose Screen） → ViewModel → Repository → API 
 - 统一 OkHttp 拦截器处理 Token 注入、日志、错误转换
 - 接口返回统一包装类 `Result<T>`（与后端 code/message/data 对应）
 - 所有网络请求在 Repository 层通过 Coroutines 调用，ViewModel 中使用 `viewModelScope.launch`
+- Retrofit BaseUrl 配置读取自 BuildConfig，所有接口路径遵循 `/api/v1/` 前缀 + 小写中划线约定
 
 ## 代码规范
 
@@ -360,6 +383,13 @@ View（Activity/Fragment/Compose Screen） → ViewModel → Repository → API 
 - 常量：UPPER_SNAKE_CASE，定义在 `companion object` 或 `constants/` 中
 - Hilt 注入：Repository 和 API 通过 `@Module` + `@Provides` 或 `@Binds` 提供
 - 禁止在 View 层直接调用 API，必须通过 ViewModel → Repository
+
+## Figma MCP 使用规范
+
+- Claude Code 通过 Figma MCP Server 读取设计稿生成 Android UI 代码
+- Figma 组件优先映射到 Material 3 Compose 组件，其次映射到项目 `widget/` 中的自定义组件
+- 从 Figma 提取的颜色和间距应映射到 MaterialTheme 主题变量，不使用硬编码值
+- 生成的代码必须遵守本文档中的 MVVM + Compose 规范
 ```
 
 ---
@@ -375,4 +405,5 @@ View（Activity/Fragment/Compose Screen） → ViewModel → Repository → API 
 | 接口函数命名 | `getXxx` / `createXxx` / `updateXxx` / `deleteXxx` |
 | 网络层封装 | 各端各自封装（Axios / Dio / OkHttp），但统一处理 Token 注入、错误拦截、Result 解包 |
 | 分层原则 | UI → 业务逻辑 → 数据访问，禁止跨层调用 |
+| 业务错误码 | HTTP 200 时，Result.code=200 为成功，业务错误码从 1000 起，各端统一按此区分处理逻辑 |
 | 文档语言 | 中文 |
