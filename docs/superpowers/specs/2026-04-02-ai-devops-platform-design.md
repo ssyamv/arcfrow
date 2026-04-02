@@ -79,6 +79,7 @@ NanoClaw 作为团队统一 AI 工作台，提供四类能力：
 | 文档操作 | "帮我查一下用户登录的 PRD" | docs Git 读写 + Wiki.js 同步 |
 
 渠道接入：
+
 - **飞书**：已实现（FeishuChannel + feishu-docs 技能），API 指向讯飞版飞书（`open.xfchat.iflytek.com`）
 - **微信**：待后续接入，计划使用腾讯官方 `@tencent-weixin/openclaw-weixin-cli` 插件
 
@@ -97,6 +98,7 @@ NanoClaw **不取代** Web UI，而是提供额外的对话式入口。深度操
 | 飞书状态推送 | 在各节点完成后推送飞书消息（含审批快捷按钮） |
 
 胶水服务与 Dify 的分工：
+
 - **Dify**：负责 AI 工作流编排（Prompt 链、RAG 检索、模型调用）
 - **胶水服务**：负责系统间的数据搬运（Git 读写、Webhook 路由、飞书通知、Claude Code 调度）
 
@@ -106,12 +108,14 @@ NanoClaw **不取代** Web UI，而是提供额外的对话式入口。深度操
 
 ### 3.1 端到端流程：PRD → 代码 → 质量闭环
 
-**阶段一：需求录入**
+#### 阶段一：需求录入
+
 - PM 在 Wiki.js 编写 PRD → 自动 commit 到 docs Git
 - PM 在 Plane 创建 Issue，关联 PRD 文件路径
 - PM 将 Issue 状态改为 `Approved`
 
-**阶段二：技术文档生成**
+#### 阶段二：技术文档生成
+
 - Plane Webhook → 胶水服务接收事件
 - 胶水服务从 docs Git 拉取 PRD 内容
 - 胶水服务调用 Dify 工作流一（Claude Opus 生成技术设计文档）
@@ -119,17 +123,20 @@ NanoClaw **不取代** Web UI，而是提供额外的对话式入口。深度操
 - 链式触发工作流二 → Claude Sonnet 生成 OpenAPI yaml
 - 胶水服务 → 飞书推送通知 @研发，附"查看/通过/打回"按钮
 
-**阶段三：人工 Review**
+#### 阶段三：人工 Review
+
 - 研发在 Wiki.js 查看技术文档，在飞书点"通过"或"打回"
 - 通过 → 胶水服务更新 Plane Issue 状态
 - 打回 → 通知 PM 修改 PRD 或手动调整技术文档后重新提审
 
-**阶段四：代码生成（两轮策略）**
+#### 阶段四：代码生成（两轮策略）
+
 - **第一轮（后端）**：胶水服务以 headless 模式启动 Claude Code，读取 CLAUDE.md + 技术设计文档 + OpenAPI yaml，生成后端 Spring Boot 代码 → 提 MR → 研发 Review → 合并
 - **第二轮（前端/客户端）**：后端 MR 合并 + Figma 设计稿交付后触发。Claude Code 通过 Figma MCP Server 读取设计稿，结合技术文档生成 UI 代码（Vue3 / Flutter / Android）→ 各端提 MR → 研发 Review / 微调
 - 后端先行确认接口，前端基于已确认的接口生成，减少不一致
 
 **阶段五：质量闭环**（全端覆盖，客户端 CI/CD 补齐后接入）
+
 - MR 合并触发 CI/CD 跑测试
 - 成功 → 更新 Plane Issue 状态 → 飞书通知 → 交付归档
 - 失败 → CI 日志 → 胶水服务 → Dify 工作流三分析 → 自动创建 Bug Issue → Claude Code headless 自动修复 → 重新提 MR → 重入 Review（最多自动修复 2 次，超出转人工处理）
@@ -138,13 +145,14 @@ NanoClaw **不取代** Web UI，而是提供额外的对话式入口。深度操
 
 团队成员通过飞书/微信 @NanoClaw 发起请求，NanoClaw 根据意图路由：
 
-```
+```text
 成员消息 → NanoClaw 意图识别
   → 项目问答：CLAUDE.md 记忆 + Dify RAG API
   → 任务操作：Plane MCP 直接读写
   → 工作流触发：胶水服务 REST API → Dify 工作流
   → 文档操作：docs Git 读写 + Wiki.js GraphQL 同步
   → 响应回传飞书/微信
+
 ```
 
 ---
@@ -226,6 +234,7 @@ NanoClaw **不取代** Web UI，而是提供额外的对话式入口。深度操
 **并行关系**：Phase 4 可与 Phase 3 并行推进（均依赖 Phase 1，互不依赖），实际周期约 13 周。
 
 **依赖关系**：
+
 - Phase 5 依赖 Phase 2（Plane MCP）+ Phase 4（RAG 能力）
 - Phase 6 依赖 Phase 3（胶水服务）；与 Phase 5 无硬依赖（飞书通知由胶水服务提供，NanoClaw 非必须）
 

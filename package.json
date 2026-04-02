@@ -1,7 +1,9 @@
 {
   "name": "arcflow",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "lint": "eslint . && markdownlint-cli2 'docs/**/*.md'",
     "lint:fix": "eslint . --fix",
@@ -21,9 +23,20 @@
     "lint-staged": "^15.0.0"
   },
   "lint-staged": {
-    "packages/gateway/**/*.{ts,tsx}": ["eslint --fix", "prettier --write"],
-    "packages/web/**/*.{ts,tsx,vue}": ["eslint --fix", "prettier --write"],
-    "**/*.md": ["markdownlint-cli2 --fix", "prettier --write"],
-    "**/*.{json,yml,yaml}": ["prettier --write"]
+    "packages/gateway/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "packages/web/**/*.{ts,tsx,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "**/*.md": [
+      "markdownlint-cli2 --fix",
+      "prettier --write"
+    ],
+    "**/*.{json,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

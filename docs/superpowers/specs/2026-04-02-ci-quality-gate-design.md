@@ -17,12 +17,13 @@
 
 arcflow 仓库（GitHub），采用 Monorepo 结构：
 
-```
+```text
 arcflow/
 ├── packages/
 │   ├── gateway/          # Bun + Hono 胶水服务 (TypeScript)
 │   └── web/              # Vue3 管理前端 (TypeScript + Vue)
 ├── docs/                 # 设计文档 (Markdown)
+
 ```
 
 ### 1.3 分支模型
@@ -43,11 +44,12 @@ arcflow/
   "private": true,
   "workspaces": ["packages/*"]
 }
+
 ```
 
 ### 2.2 CI 相关文件
 
-```
+```text
 arcflow/
 ├── .github/
 │   ├── workflows/
@@ -63,6 +65,7 @@ arcflow/
 ├── .markdownlint.json        # markdownlint 配置
 ├── .gitleaksignore           # gitleaks 白名单
 └── package.json              # workspace 根配置
+
 ```
 
 ## 3. 代码规范（Lint + 格式化）
@@ -104,6 +107,7 @@ arcflow/
     "**/*.{json,yml,yaml}": ["prettier --write"]
   }
 }
+
 ```
 
 pre-commit hook 通过 `husky` 自动调用 `lint-staged`，提交前拦截不规范代码。
@@ -191,15 +195,18 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+
   - package-ecosystem: "npm"
     directory: "/packages/web"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+
 ```
 
 **CI 中额外运行 `npm audit`**：
@@ -217,6 +224,7 @@ updates:
 - uses: gitleaks/gitleaks-action@v2
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 ```
 
 检测到任何敏感信息 → 阻塞合并。
@@ -253,15 +261,19 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
       docs: ${{ steps.filter.outputs.docs }}
     steps:
+
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
             gateway:
+
               - 'packages/gateway/**'
             web:
+
               - 'packages/web/**'
             docs:
+
               - 'docs/**'
               - '**/*.md'
 
@@ -270,11 +282,13 @@ jobs:
     if: needs.changes.outputs.gateway == 'true'
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun run lint --max-warnings 0
         working-directory: packages/gateway
+
       - run: bunx prettier --check packages/gateway/
 
   lint-web:
@@ -282,11 +296,13 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun run lint
         working-directory: packages/web
+
       - run: bunx prettier --check packages/web/
 
   lint-docs:
@@ -294,6 +310,7 @@ jobs:
     if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
@@ -304,6 +321,7 @@ jobs:
     if: needs.changes.outputs.gateway == 'true'
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
@@ -312,6 +330,7 @@ jobs:
       # 覆盖率检查（阈值 80%）
       - name: Install lcov
         run: sudo apt-get install -y lcov
+
       - name: Check coverage
         run: |
           COVERAGE=$(lcov --summary packages/gateway/coverage/lcov.info 2>&1 | grep 'lines' | grep -o '[0-9.]*%' | head -1 | tr -d '%')
@@ -326,13 +345,16 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bunx vitest run --coverage --coverage.reporter=lcov
         working-directory: packages/web
+
       - name: Install lcov
         run: sudo apt-get install -y lcov
+
       - name: Check coverage
         run: |
           COVERAGE=$(lcov --summary packages/web/coverage/lcov.info 2>&1 | grep 'lines' | grep -o '[0-9.]*%' | head -1 | tr -d '%')
@@ -341,6 +363,7 @@ jobs:
             echo "::error::Coverage ${COVERAGE}% is below threshold 80%"
             exit 1
           fi
+
 ```
 
 ### 7.2 ai-review.yml — AI Review
@@ -363,15 +386,18 @@ jobs:
   ai-review:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: claude-sonnet-4-6-20250514
           direct_prompt: |
             Review this PR for:
+
             1. Logic errors and bugs (critical)
             2. Security vulnerabilities - OWASP Top 10 (critical)
             3. Data loss risks (critical)
@@ -383,6 +409,7 @@ jobs:
             Style issues are handled by lint — do not flag them.
             If any critical issues are found, request changes.
             Otherwise, approve the PR.
+
 ```
 
 > **注意**：`anthropics/claude-code-action@beta` 是 Anthropic 官方 Action，会自动读取仓库的 CLAUDE.md 作为上下文，并以 PR Review 形式发布结果（支持 `approved` 和 `changes_requested`）。如该 Action 接口发生变更，需参照其官方文档调整配置。
@@ -404,9 +431,11 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -414,33 +443,40 @@ jobs:
   audit-gateway:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
         working-directory: packages/gateway
+
       - run: bun pm audit --level=high
         working-directory: packages/gateway
 
   audit-web:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
         working-directory: packages/web
+
       - run: bun pm audit --level=high
         working-directory: packages/web
 
   license-check-gateway:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - run: bun install
         working-directory: packages/gateway
+
       - run: |
           npx license-checker --production --onlyAllow \
             "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD"
@@ -449,17 +485,21 @@ jobs:
   license-check-web:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - run: bun install
         working-directory: packages/web
+
       - run: |
           npx license-checker --production --onlyAllow \
             "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD"
         working-directory: packages/web
+
 ```
 
 ## 8. 分支保护规则
@@ -508,6 +548,7 @@ cd packages/web && bun run test
 
 # 全局测试
 bun run test
+
 ```
 
 ### 9.2 根 package.json scripts
@@ -523,6 +564,7 @@ bun run test
     "prepare": "husky"
   }
 }
+
 ```
 
 ### 9.3 CI 反馈

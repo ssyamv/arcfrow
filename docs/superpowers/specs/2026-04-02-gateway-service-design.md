@@ -68,9 +68,10 @@
 
 ### 3.4 内部 API 请求/响应格式
 
-**POST /api/workflow/trigger**
+#### POST /api/workflow/trigger
 
 请求 body：
+
 ```json
 {
   "workflow_type": "prd_to_tech | tech_to_openapi | bug_analysis | code_gen",
@@ -80,22 +81,26 @@
     "target_repos": ["backend", "vue3"]
   }
 }
+
 ```
 
 响应：
+
 ```json
 {
   "execution_id": 42,
   "status": "pending",
   "message": "工作流已触发"
 }
+
 ```
 
-**GET /api/workflow/executions**
+#### GET /api/workflow/executions
 
 查询参数：`?workflow_type=code_gen&status=running&limit=20`
 
 响应：
+
 ```json
 {
   "data": [
@@ -110,6 +115,7 @@
   ],
   "total": 1
 }
+
 ```
 
 ---
@@ -149,6 +155,7 @@ CREATE TABLE webhook_event (
   source TEXT NOT NULL,                  -- 'plane' | 'git' | 'cicd' | 'feishu'
   received_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
 ```
 
 `webhook_event` 表用定时任务每日清理 24 小时前的记录。
@@ -159,7 +166,7 @@ CREATE TABLE webhook_event (
 
 ### 5.1 流程 A：PRD Approved → 技术文档 + OpenAPI 生成
 
-```
+```text
 Plane Webhook (Issue status → Approved)
   → POST /webhook/plane
   → 去重检查
@@ -176,11 +183,12 @@ Plane Webhook (Issue status → Approved)
   → 更新 workflow_execution (status: success)
   → 飞书推送通知 @研发（消息卡片含"查看/通过/打回"按钮）
   → 失败时: 更新 workflow_execution (status: failed)，飞书通知 @研发 TL
+
 ```
 
 ### 5.2 流程 B：研发审批（通过/打回）
 
-```
+```text
 飞书审批按钮点击
   → POST /webhook/feishu
   → 解析回调，提取 action（approve/reject）+ Issue ID
@@ -193,11 +201,12 @@ Plane Webhook (Issue status → Approved)
   → 打回:
     → Plane API: 更新 Issue 状态为 Rejected
     → 飞书通知 PM 修改
+
 ```
 
 ### 5.3 流程 C：代码生成
 
-```
+```text
 审批通过后触发
   → 写入 workflow_execution (status: running)
   → 确定目标仓库（后端/Vue3/Flutter/Android，根据 PRD "涉及端"字段）
@@ -210,6 +219,7 @@ Plane Webhook (Issue status → Approved)
   → 更新 workflow_execution (status: success)
   → 飞书通知 @研发 Review MR
   → 超时或失败: 更新 workflow_execution (status: failed)，飞书通知
+
 ```
 
 **Claude Code 调用参数说明**：
@@ -219,6 +229,7 @@ claude -p "任务描述" \
   --output-format json \
   --dangerously-skip-permissions \
   --mcp-config /path/to/.mcp.json    # 包含 Figma MCP Server 配置（仅 UI 代码生成时需要）
+
 ```
 
 - 工作目录：Bun.spawn 的 `cwd` 设为目标代码仓库的本地克隆路径
@@ -230,7 +241,7 @@ claude -p "任务描述" \
 
 ### 5.4 流程 D：CI/CD 失败 → Bug 自动修复
 
-```
+```text
 CI/CD Webhook (Test Failed)
   → POST /webhook/cicd
   → 去重检查
@@ -248,6 +259,7 @@ CI/CD Webhook (Test Failed)
     → retry_count >= 2:
       → 更新 status: escalated
       → 飞书通知 @研发 TL 人工介入
+
 ```
 
 ---
@@ -270,7 +282,7 @@ CI/CD Webhook (Test Failed)
 
 ## 七、项目结构
 
-```
+```text
 gateway-service/
 ├── src/
 │   ├── index.ts              # 入口，Hono 应用初始化
@@ -303,6 +315,7 @@ gateway-service/
 ├── package.json
 ├── tsconfig.json
 └── .env.example              # 环境变量模板
+
 ```
 
 ---
@@ -347,4 +360,5 @@ WIKIJS_API_KEY=
 
 # Claude Code
 CLAUDE_CODE_TIMEOUT=600000
+
 ```

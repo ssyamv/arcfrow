@@ -57,9 +57,11 @@ ArcFlow AI 研发运营一体化平台的文档仓库。所有文档以 Markdown
 ## 文档 Frontmatter 规范
 
 所有 .md 文件必须包含：
+
 - title、status（draft/active/deprecated）、owner、last_updated
 - PRD 额外需要：type（module/feature）、created、sprint
 - 技术设计文档额外需要：source_prd、generated_by、generated_at、reviewer
+
 ```
 
 ---
@@ -92,6 +94,7 @@ Controller → Service（接口） → ServiceImpl → Mapper → Entity
 ## 包结构约定
 
 ```
+
 com.公司.项目
 ├── controller/
 ├── service/
@@ -106,7 +109,8 @@ com.公司.项目
 │   ├── exception/   # 全局异常处理
 │   └── enums/
 └── interceptor/     # 拦截器
-```
+
+```text
 
 ## 接口规范
 
@@ -133,6 +137,7 @@ com.公司.项目
 - 异常统一通过全局异常处理器捕获，不在 Controller 中 try-catch
 - 参数校验使用 @Valid + JSR 303 注解
 - 日志使用 SLF4J，注入方式 `@Slf4j`（Lombok），禁止使用 `System.out.println`
+
 ```
 
 ---
@@ -154,6 +159,7 @@ com.公司.项目
 ## 目录结构约定
 
 ```
+
 src/
 ├── api/              # 接口请求（按模块拆分文件）
 ├── assets/           # 静态资源
@@ -169,7 +175,8 @@ src/
 ├── styles/           # 全局样式
 ├── types/            # TypeScript 类型定义
 └── utils/            # 工具函数
-```
+
+```text
 
 ## 组件规范
 
@@ -212,6 +219,7 @@ src/
 - Figma 组件优先映射到 Element Plus 组件，Element Plus 无法满足时映射到 shadcn-vue
 - 从 Figma 提取的颜色和间距应映射到项目已有的 CSS 变量 / Tailwind token，不使用硬编码值
 - 生成的代码必须遵守本文档中的组件规范和样式规范
+
 ```
 
 ---
@@ -232,6 +240,7 @@ src/
 ## 目录结构约定
 
 ```
+
 lib/
 ├── main.dart
 ├── app/
@@ -250,7 +259,8 @@ lib/
 ├── widgets/             # 全局公共组件
 ├── utils/               # 工具函数
 └── constants/           # 常量定义
-```
+
+```text
 
 ## 分层规范
 
@@ -300,6 +310,7 @@ View → Controller → API / Repository
 - Figma 组件映射到 Flutter 原生 Widget 或项目 `widgets/` 中的自定义组件
 - 从 Figma 提取的颜色和间距应映射到 `app/theme/` 中定义的主题变量，不使用硬编码值
 - 生成的代码必须遵守本文档中的分层规范和代码规范
+
 ```
 
 ---
@@ -323,6 +334,7 @@ View → Controller → API / Repository
 ## 目录结构约定
 
 ```
+
 app/src/main/java/com/公司/项目/
 ├── ui/                   # UI 层
 │   └── user/
@@ -340,7 +352,8 @@ app/src/main/java/com/公司/项目/
 │   ├── ext/              # Kotlin 扩展函数
 │   └── constants/
 └── widget/               # 全局公共 UI 组件
-```
+
+```text
 
 ## 分层规范
 
@@ -390,6 +403,7 @@ View（Activity/Fragment/Compose Screen） → ViewModel → Repository → API 
 - Figma 组件优先映射到 Material 3 Compose 组件，其次映射到项目 `widget/` 中的自定义组件
 - 从 Figma 提取的颜色和间距应映射到 MaterialTheme 主题变量，不使用硬编码值
 - 生成的代码必须遵守本文档中的 MVVM + Compose 规范
+
 ```
 
 ---
