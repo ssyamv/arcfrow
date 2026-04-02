@@ -6,36 +6,51 @@
 
 ## 一、分支策略
 
-### 1.1 分支类型
+### 1.1 长期分支
 
-| 分支 | 命名规则 | 用途 | 保护 |
-|------|---------|------|------|
-| `main` | — | 稳定版本，始终可部署 | 受保护，禁止直接 push |
-| `feature/*` | `feature/#{issue号}-{简短描述}` | 新功能开发 | — |
-| `fix/*` | `fix/#{issue号}-{简短描述}` | Bug 修复 | — |
-| `docs/*` | `docs/#{issue号}-{简短描述}` | 文档更新 | — |
-| `infra/*` | `infra/#{issue号}-{简短描述}` | 基础设施搭建 | — |
+| 分支 | 用途 | 保护规则 |
+|------|------|---------|
+| `main` | 生产环境，始终稳定可部署 | 受保护，仅接受来自 `test` 的 PR，需 1 人 Approve |
+| `test` | 测试环境，QA 验证 | 受保护，仅接受来自 `develop` 的 PR，需 1 人 Approve |
+| `develop` | 开发集成，日常开发的合并目标 | 受保护，接受来自 feature 分支的 PR，需 1 人 Approve |
 
-### 1.2 命名示例
+### 1.2 临时分支
+
+| 分支 | 命名规则 | 用途 | 从哪创建 | PR 目标 |
+|------|---------|------|---------|---------|
+| `feature/*` | `feature/#{issue号}-{简短描述}` | 新功能开发 | `develop` | `develop` |
+| `fix/*` | `fix/#{issue号}-{简短描述}` | Bug 修复 | `develop` | `develop` |
+| `hotfix/*` | `hotfix/#{issue号}-{简短描述}` | 生产紧急修复 | `main` | `main` + `develop` |
+| `docs/*` | `docs/#{issue号}-{简短描述}` | 文档更新 | `develop` | `develop` |
+| `infra/*` | `infra/#{issue号}-{简短描述}` | 基础设施搭建 | `develop` | `develop` |
+
+### 1.3 命名示例
 
 ```
 feature/#7-gateway-service
 fix/#12-webhook-dedup
+hotfix/#15-feishu-auth-crash
 docs/#3-prd-templates
 infra/#1-docs-repo-setup
 ```
 
-### 1.3 分支生命周期
+### 1.4 分支流转
 
 ```
-main ──────────────────────────────────────────────
-  │                                    ↑
-  └── feature/#7-gateway ──── PR ──── merge ──── 删除分支
+feature/* ──PR──→ develop ──PR──→ test ──PR──→ main
+                  (集成开发)      (QA 验证)    (生产部署)
 ```
 
-- 从 `main` 创建分支
-- 开发完成后提 PR 回 `main`
-- PR 合并后自动删除源分支
+**日常开发流程**：
+1. 从 `develop` 创建 feature 分支
+2. 开发完成后提 PR 回 `develop`，Review 后合并
+3. `develop` 积累一批功能后，提 PR 到 `test` 进行 QA 验证
+4. `test` 验证通过后，提 PR 到 `main` 发布上线
+5. PR 合并后自动删除 feature 分支
+
+**紧急修复流程**：
+1. 从 `main` 创建 hotfix 分支
+2. 修复后同时提 PR 到 `main` 和 `develop`（保持两端同步）
 
 ---
 
@@ -130,7 +145,7 @@ Closes #<issue号>
 
 ### 3.2 关联 Issue
 
-PR 描述中使用 `Closes #1` 或 `Fixes #1` 关键字，合并后 Issue 自动关闭。
+PR 描述中使用 `Closes #1` 或 `Fixes #1` 关键字。注意：仅当 PR 合并到仓库的**默认分支**（main）时 Issue 才会自动关闭。合并到 develop/test 时不会自动关闭，这是预期行为——Issue 应在功能上线到 main 后才关闭。
 
 ### 3.3 Code Review
 
@@ -219,9 +234,9 @@ feat(#7): 实现 Plane Webhook 接收和去重
 ```bash
 # 1. 认领 Issue，将自己设为 Assignee
 
-# 2. 从 main 创建分支
-git checkout main
-git pull origin main
+# 2. 从 develop 创建分支
+git checkout develop
+git pull origin develop
 git checkout -b feature/#7-gateway-service
 
 # 3. 开发 + 提交
@@ -231,20 +246,33 @@ git commit -m "feat(#7): 实现 Webhook 路由框架"
 # 4. 推送分支
 git push -u origin feature/#7-gateway-service
 
-# 5. 在 GitHub 创建 PR，关联 Issue
+# 5. 在 GitHub 创建 PR 到 develop，关联 Issue
 #    标题：feat(#7): 实现胶水服务 Webhook 路由
 #    描述：Closes #7
+#    Base 分支：develop（不是 main！）
 
 # 6. 等待 Review，根据反馈修改
 
-# 7. Review 通过后 Squash and Merge
+# 7. Review 通过后 Squash and Merge 到 develop
 
-# 8. 本地切回 main 并更新
-git checkout main
-git pull origin main
+# 8. 本地切回 develop 并更新
+git checkout develop
+git pull origin develop
 ```
 
-### 6.2 Review 者流程
+### 6.2 集成发布流程（由负责人操作）
+
+```bash
+# 1. develop 积累一批功能后，创建 PR: develop → test
+#    标题：release: Phase 1 功能集成测试
+#    在 test 环境部署并验证
+
+# 2. QA 验证通过后，创建 PR: test → main
+#    标题：release: Phase 1 上线发布
+#    合并后部署到生产环境
+```
+
+### 6.3 Review 者流程
 
 1. 收到 Review 请求通知
 2. 24 小时内完成 Review
@@ -252,13 +280,13 @@ git pull origin main
 4. 没问题：Approve
 5. 作者修改后重新 Review
 
-### 6.3 冲突处理
+### 6.4 冲突处理
 
 ```bash
 # 如果 PR 提示冲突
 git checkout feature/#7-gateway-service
 git fetch origin
-git rebase origin/main
+git rebase origin/develop
 # 解决冲突
 git add .
 git rebase --continue
