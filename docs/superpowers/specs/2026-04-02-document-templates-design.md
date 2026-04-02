@@ -331,8 +331,8 @@ PRD → 技术文档 → OpenAPI → 代码生成
 ```
 PRD → 技术文档 + OpenAPI（AI 生成，可与设计稿并行）
     → 设计师出 Figma 设计稿
-    → AI 读 Figma + 技术文档 → 生成 UI 代码（前端/客户端）
-    → AI 读 OpenAPI + 技术文档 → 生成后端代码
+    → Claude Code 通过 Figma MCP 读取设计稿 + 技术文档 → 生成 UI 代码（前端/客户端）
+    → Claude Code 读 OpenAPI + 技术文档 → 生成后端代码
     → 研发 Review / 微调 → CI/CD
 ```
 
@@ -346,9 +346,9 @@ PRD → 技术文档 + OpenAPI（AI 生成，可与设计稿并行）
 
 | 模块 | 影响 |
 |------|------|
-| 胶水服务 | 需要对接 Figma MCP，在 UI 代码生成时读取设计稿 |
+| 胶水服务 | 调度 Claude Code headless 时传入 Figma 链接；胶水服务本身不直接对接 Figma |
 | 多端代码生成策略 | 拆分为后端生成和 UI 生成两条并行线 |
-| Claude Code | 需要配置 Figma MCP Server，headless 模式下读取设计稿 |
+| Claude Code | 配置 Figma MCP Server，headless 模式下通过 MCP 读取设计稿并生成 UI 代码 |
 
 ---
 
