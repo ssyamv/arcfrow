@@ -1,0 +1,6 @@
+dist/
+coverage/
+node_modules/
+bun.lockb
+package-lock.json
+*.md
