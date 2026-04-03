@@ -1,12 +1,36 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { getConfig } from "./config";
+import { getDb } from "./db";
+import { requestLogger } from "./middleware/logger";
+import { healthRoutes } from "./routes/health";
+import { createWebhookRoutes } from "./routes/webhook";
+import { apiRoutes } from "./routes/api";
+import { startScheduler } from "./scheduler";
+
+// 初始化数据库
+getDb();
 
 export const app = new Hono();
 
-app.get("/health", (c) => c.json({ status: "ok" }));
+// 全局中间件
+app.use("*", requestLogger);
 
-app.get("/version", (c) => c.json({ version: "0.0.1" }));
+// CORS for API routes (Web frontend access)
+app.use("/api/*", cors());
 
+// 挂载路由
+app.route("/", healthRoutes);
+app.route("/webhook", createWebhookRoutes());
+app.route("/api", apiRoutes);
+
+// 启动调度器（非测试环境）
+if (process.env.NODE_ENV !== "test") {
+  startScheduler();
+}
+
+const config = getConfig();
 export default {
-  port: 3100,
+  port: config.port,
   fetch: app.fetch,
 };

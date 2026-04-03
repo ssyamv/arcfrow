@@ -1,0 +1,184 @@
+import { getConfig } from "../config";
+
+let accessToken = "";
+let tokenExpiresAt = 0;
+
+async function getAccessToken(): Promise<string> {
+  if (accessToken && Date.now() < tokenExpiresAt) {
+    return accessToken;
+  }
+
+  const config = getConfig();
+  const res = await fetch("https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      app_id: config.feishuAppId,
+      app_secret: config.feishuAppSecret,
+    }),
+  });
+
+  const json = (await res.json()) as {
+    code: number;
+    tenant_access_token: string;
+    expire: number;
+  };
+
+  if (json.code !== 0) {
+    throw new Error(`Feishu auth failed: code ${json.code}`);
+  }
+
+  accessToken = json.tenant_access_token;
+  // Refresh 5 minutes before expiry
+  tokenExpiresAt = Date.now() + (json.expire - 300) * 1000;
+  return accessToken;
+}
+
+async function sendMessage(chatId: string, msgType: string, content: string): Promise<void> {
+  const token = await getAccessToken();
+
+  const res = await fetch(
+    "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        receive_id: chatId,
+        msg_type: msgType,
+        content,
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    console.error(`Feishu send message failed: ${res.status}`);
+  }
+}
+
+export interface TechReviewCardParams {
+  chatId: string;
+  featureName: string;
+  prdLink: string;
+  techDocLink: string;
+  openApiLink: string;
+  issueId: string;
+  docPath: string;
+}
+
+export async function sendTechReviewCard(params: TechReviewCardParams): Promise<void> {
+  const card = {
+    config: { wide_screen_mode: true },
+    header: {
+      title: { tag: "plain_text", content: `📋 技术文档 Review: ${params.featureName}` },
+      template: "blue",
+    },
+    elements: [
+      {
+        tag: "div",
+        fields: [
+          {
+            is_short: true,
+            text: { tag: "lark_md", content: `**PRD:** [查看](${params.prdLink})` },
+          },
+          {
+            is_short: true,
+            text: { tag: "lark_md", content: `**技术文档:** [查看](${params.techDocLink})` },
+          },
+          {
+            is_short: true,
+            text: { tag: "lark_md", content: `**OpenAPI:** [查看](${params.openApiLink})` },
+          },
+        ],
+      },
+      {
+        tag: "action",
+        actions: [
+          {
+            tag: "button",
+            text: { tag: "plain_text", content: "✅ 通过" },
+            type: "primary",
+            value: JSON.stringify({
+              action: "approve",
+              issue_id: params.issueId,
+              doc_path: params.docPath,
+            }),
+          },
+          {
+            tag: "button",
+            text: { tag: "plain_text", content: "❌ 打回" },
+            type: "danger",
+            value: JSON.stringify({
+              action: "reject",
+              issue_id: params.issueId,
+              doc_path: params.docPath,
+            }),
+          },
+        ],
+      },
+    ],
+  };
+
+  await sendMessage(params.chatId, "interactive", JSON.stringify(card));
+}
+
+export async function sendNotification(
+  chatId: string,
+  title: string,
+  content: string,
+): Promise<void> {
+  const card = {
+    config: { wide_screen_mode: true },
+    header: {
+      title: { tag: "plain_text", content: title },
+      template: "yellow",
+    },
+    elements: [{ tag: "div", text: { tag: "lark_md", content } }],
+  };
+
+  await sendMessage(chatId, "interactive", JSON.stringify(card));
+}
+
+export async function sendBugNotification(
+  chatId: string,
+  issueId: string,
+  bugReport: string,
+  severity: string,
+): Promise<void> {
+  const template = severity === "P0" || severity === "P1" ? "red" : "orange";
+  const card = {
+    config: { wide_screen_mode: true },
+    header: {
+      title: { tag: "plain_text", content: `🐛 Bug [${severity}]: ${issueId}` },
+      template,
+    },
+    elements: [{ tag: "div", text: { tag: "lark_md", content: bugReport } }],
+  };
+
+  await sendMessage(chatId, "interactive", JSON.stringify(card));
+}
+
+export async function updateCard(
+  messageId: string,
+  updatedCard: Record<string, unknown>,
+): Promise<void> {
+  const token = await getAccessToken();
+
+  const res = await fetch(`https://open.feishu.cn/open-apis/im/v1/messages/${messageId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      msg_type: "interactive",
+      content: JSON.stringify(updatedCard),
+    }),
+  });
+
+  if (!res.ok) {
+    console.error(`Feishu update card failed: ${res.status}`);
+  }
+}

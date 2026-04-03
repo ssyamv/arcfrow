@@ -1,7 +1,20 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { closeDb, getDb } from "./db";
+
+// 必须在 import app 之前设置 test 环境
+process.env.NODE_ENV = "test";
+
 import { app } from "./index";
 
-describe("gateway health check", () => {
+describe("gateway app", () => {
+  beforeEach(() => {
+    getDb();
+  });
+
+  afterEach(() => {
+    closeDb();
+  });
+
   it("GET /health returns 200", async () => {
     const res = await app.request("/health");
     expect(res.status).toBe(200);
@@ -14,5 +27,26 @@ describe("gateway health check", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ version: "0.0.1" });
+  });
+
+  it("POST /webhook/plane is routed", async () => {
+    const res = await app.request("/webhook/plane", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("POST /api/workflow/trigger is routed", async () => {
+    const res = await app.request("/api/workflow/trigger", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        workflow_type: "prd_to_tech",
+        plane_issue_id: "TEST-1",
+      }),
+    });
+    expect(res.status).toBe(200);
   });
 });
