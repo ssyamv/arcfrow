@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { getConfig } from "./config";
 import { getDb } from "./db";
 import { requestLogger } from "./middleware/logger";
@@ -14,6 +15,9 @@ export const app = new Hono();
 
 // 全局中间件
 app.use("*", requestLogger);
+
+// CORS for API routes (Web frontend access)
+app.use("/api/*", cors());
 
 // 挂载路由
 app.route("/", healthRoutes);
