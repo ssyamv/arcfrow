@@ -92,8 +92,8 @@ flowchart TD
 
 ## 仓库结构
 
-```
-arcfrow/
+```text
+ArcFlow/
 ├── CLAUDE.md                          # Claude Code 项目上下文
 ├── README.md
 ├── .github/
@@ -136,7 +136,7 @@ arcfrow/
 - Commit Message 规范
 - Code Review 流程
 
-当前开发任务见 [Phase 1 Milestone](https://github.com/ssyamv/arcfrow/milestone/1)。
+当前开发任务见 [Phase 1 Milestone](https://github.com/ssyamv/ArcFlow/milestone/1)。
 
 ## License
 

@@ -19,7 +19,7 @@ ssh "$SERVER" "mkdir -p $DEPLOY_DIR"
 # 如果目标目录没有 git 仓库，先 clone
 ssh "$SERVER" "
   if [ ! -d '$DEPLOY_DIR/.git' ]; then
-    git clone https://github.com/ssyamv/arcfrow.git $DEPLOY_DIR
+    git clone https://github.com/ssyamv/ArcFlow.git $DEPLOY_DIR
   fi
   cd $DEPLOY_DIR
   git fetch origin
