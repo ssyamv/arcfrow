@@ -47,6 +47,23 @@ export interface VersionResponse {
   version: string;
 }
 
+export interface ExecutionDetail {
+  id: number;
+  workflow_type: string;
+  trigger_source: string;
+  plane_issue_id: string | null;
+  input_path: string | null;
+  status: string;
+  error_message: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export function fetchExecution(id: number): Promise<ExecutionDetail> {
+  return request<ExecutionDetail>(`/api/workflow/executions/${id}`);
+}
+
 export function fetchExecutions(filters?: {
   workflow_type?: string;
   status?: string;
@@ -63,11 +80,22 @@ export function triggerWorkflow(params: {
   workflow_type: string;
   plane_issue_id: string;
   input_path?: string;
+  target_repos?: string[];
+  figma_url?: string;
 }): Promise<TriggerResponse> {
+  const { workflow_type, plane_issue_id, ...rest } = params;
   return request<TriggerResponse>("/api/workflow/trigger", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify({
+      workflow_type,
+      plane_issue_id,
+      params: {
+        input_path: rest.input_path,
+        target_repos: rest.target_repos,
+        figma_url: rest.figma_url,
+      },
+    }),
   });
 }
 

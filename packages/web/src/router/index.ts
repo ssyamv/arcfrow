@@ -18,6 +18,11 @@ const router = createRouter({
       component: () => import("../pages/WorkflowList.vue"),
     },
     {
+      path: "/workflows/:id",
+      name: "workflow-detail",
+      component: () => import("../pages/WorkflowDetail.vue"),
+    },
+    {
       path: "/trigger",
       name: "trigger",
       component: () => import("../pages/WorkflowTrigger.vue"),

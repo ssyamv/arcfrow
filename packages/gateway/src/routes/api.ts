@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { listWorkflowExecutions } from "../db/queries";
+import { getWorkflowExecution, listWorkflowExecutions } from "../db/queries";
 import { triggerWorkflow } from "../services/workflow";
 import type { TriggerWorkflowRequest, WorkflowType, WorkflowStatus } from "../types";
 
@@ -14,6 +14,7 @@ apiRoutes.post("/workflow/trigger", async (c) => {
     plane_issue_id: body.plane_issue_id,
     input_path: body.params?.input_path,
     target_repos: body.params?.target_repos,
+    figma_url: body.params?.figma_url,
   });
 
   return c.json({
@@ -21,6 +22,16 @@ apiRoutes.post("/workflow/trigger", async (c) => {
     status: "running",
     message: "工作流已触发",
   });
+});
+
+apiRoutes.get("/workflow/executions/:id", (c) => {
+  const id = Number(c.req.param("id"));
+  if (isNaN(id)) return c.json({ error: "Invalid ID" }, 400);
+
+  const execution = getWorkflowExecution(id);
+  if (!execution) return c.json({ error: "Not found" }, 404);
+
+  return c.json(execution);
 });
 
 apiRoutes.get("/workflow/executions", (c) => {

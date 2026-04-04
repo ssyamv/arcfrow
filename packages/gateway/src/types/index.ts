@@ -53,6 +53,7 @@ export interface TriggerWorkflowRequest {
   params?: {
     input_path?: string;
     target_repos?: string[];
+    figma_url?: string;
   };
 }
 

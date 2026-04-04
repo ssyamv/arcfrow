@@ -39,6 +39,34 @@
         />
       </div>
 
+      <template v-if="form.workflow_type === 'code_gen'">
+        <div class="mb-4">
+          <label class="block mb-1.5 font-medium text-sm">目标仓库</label>
+          <div class="flex flex-wrap gap-3">
+            <label v-for="repo in availableRepos" :key="repo" class="flex items-center gap-1.5">
+              <input
+                v-model="form.target_repos"
+                type="checkbox"
+                :value="repo"
+                class="rounded border-gray-300"
+              />
+              <span class="text-sm">{{ repo }}</span>
+            </label>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">不选则默认 backend</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block mb-1.5 font-medium text-sm">Figma 设计稿链接（可选）</label>
+          <input
+            v-model="form.figma_url"
+            type="url"
+            placeholder="https://www.figma.com/design/..."
+            class="w-full px-3 py-2 border border-gray-300 rounded"
+          />
+        </div>
+      </template>
+
       <button
         type="submit"
         :disabled="submitting"
@@ -73,16 +101,22 @@ const submitting = ref(false);
 const result = ref<{ execution_id: number } | null>(null);
 const errorMessage = ref("");
 
+const availableRepos = ["backend", "vue3", "flutter", "android"];
+
 const form = reactive({
   workflow_type: "",
   plane_issue_id: "",
   input_path: "",
+  target_repos: [] as string[],
+  figma_url: "",
 });
 
 function resetForm() {
   form.workflow_type = "";
   form.plane_issue_id = "";
   form.input_path = "";
+  form.target_repos = [];
+  form.figma_url = "";
 }
 
 async function handleSubmit() {
@@ -94,6 +128,8 @@ async function handleSubmit() {
       workflow_type: form.workflow_type,
       plane_issue_id: form.plane_issue_id,
       input_path: form.input_path || undefined,
+      target_repos: form.target_repos.length > 0 ? form.target_repos : undefined,
+      figma_url: form.figma_url || undefined,
     });
     result.value = res;
     resetForm();
