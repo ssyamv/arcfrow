@@ -100,4 +100,64 @@ describe("plane service", () => {
       expect(headers["X-API-Key"]).toBe("test-token");
     });
   });
+
+  describe("error handling", () => {
+    const originalSetTimeout = globalThis.setTimeout;
+
+    function skipRetryDelays() {
+      // @ts-expect-error - mock setTimeout to execute callback immediately
+      globalThis.setTimeout = (fn: () => void) => {
+        fn();
+        return 0;
+      };
+    }
+
+    afterEach(() => {
+      globalThis.setTimeout = originalSetTimeout;
+    });
+
+    it("throws on HTTP error response", async () => {
+      skipRetryDelays();
+      globalThis.fetch = (async () =>
+        new Response("Forbidden", { status: 403 })) as unknown as typeof fetch;
+
+      await expect(getIssue("proj-1", "issue-1")).rejects.toThrow("Plane API error: 403");
+    });
+
+    it("retries on failure before throwing", async () => {
+      skipRetryDelays();
+      let callCount = 0;
+      globalThis.fetch = (async () => {
+        callCount++;
+        throw new Error("connection refused");
+      }) as unknown as typeof fetch;
+
+      await expect(getIssue("proj-1", "issue-1")).rejects.toThrow("connection refused");
+      expect(callCount).toBe(3); // initial + 2 retries
+    });
+
+    it("succeeds on retry after initial failure", async () => {
+      skipRetryDelays();
+      let callCount = 0;
+      globalThis.fetch = (async () => {
+        callCount++;
+        if (callCount === 1) throw new Error("timeout");
+        return new Response(
+          JSON.stringify({
+            id: "issue-retry",
+            name: "Retried",
+            description_html: "",
+            state: "s1",
+            priority: "low",
+            labels: [],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }) as unknown as typeof fetch;
+
+      const issue = await getIssue("proj-1", "issue-1");
+      expect(issue.id).toBe("issue-retry");
+      expect(callCount).toBe(2);
+    });
+  });
 });

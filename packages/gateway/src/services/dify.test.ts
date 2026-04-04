@@ -27,8 +27,18 @@ function makeDifyResponse(output: string) {
   );
 }
 
+const originalFetch = globalThis.fetch;
+const originalSetTimeout = globalThis.setTimeout;
+
+function skipRetryDelays() {
+  // @ts-expect-error - mock setTimeout to execute callback immediately
+  globalThis.setTimeout = (fn: () => void) => {
+    fn();
+    return 0;
+  };
+}
+
 describe("dify service", () => {
-  const originalFetch = globalThis.fetch;
   let capturedHeaders: Record<string, string>;
 
   beforeEach(() => {
@@ -43,6 +53,7 @@ describe("dify service", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    globalThis.setTimeout = originalSetTimeout;
   });
 
   it("generateTechDoc uses difyTechDocApiKey", async () => {
@@ -61,5 +72,44 @@ describe("dify service", () => {
     const result = await analyzeBug("ci log", "context");
     expect(capturedHeaders["Authorization"]).toBe("Bearer dify-bugfix-val");
     expect(result).toBe("generated content");
+  });
+
+  it("throws on HTTP error response", async () => {
+    skipRetryDelays();
+    globalThis.fetch = (async () =>
+      new Response("Internal Server Error", { status: 500 })) as unknown as typeof fetch;
+
+    await expect(generateTechDoc("prd")).rejects.toThrow("Dify API error: 500");
+  });
+
+  it("throws when workflow status is not succeeded", async () => {
+    skipRetryDelays();
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          data: {
+            id: "run-1",
+            workflow_id: "wf-1",
+            status: "failed",
+            outputs: {},
+            error: "model timeout",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      )) as unknown as typeof fetch;
+
+    await expect(generateTechDoc("prd")).rejects.toThrow("Dify workflow failed: model timeout");
+  });
+
+  it("retries on failure before throwing", async () => {
+    skipRetryDelays();
+    let callCount = 0;
+    globalThis.fetch = (async () => {
+      callCount++;
+      throw new Error("network error");
+    }) as unknown as typeof fetch;
+
+    await expect(generateTechDoc("prd")).rejects.toThrow("network error");
+    expect(callCount).toBe(3); // initial + 2 retries
   });
 });

@@ -42,6 +42,8 @@ export const useWorkflowStore = defineStore("workflow", () => {
     workflow_type: string;
     plane_issue_id: string;
     input_path?: string;
+    target_repos?: string[];
+    figma_url?: string;
   }): Promise<TriggerResponse> {
     const result = await triggerWorkflow(params);
     await loadExecutions();
