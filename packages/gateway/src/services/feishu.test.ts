@@ -7,12 +7,8 @@ mock.module("../config", () => ({
   }),
 }));
 
-const {
-  sendNotification,
-  sendBugNotification,
-  sendTechReviewCard,
-  updateCard,
-} = await import("./feishu");
+const { sendNotification, sendBugNotification, sendTechReviewCard, updateCard } =
+  await import("./feishu");
 
 const originalFetch = globalThis.fetch;
 let mockFetchFn: ReturnType<typeof mock>;

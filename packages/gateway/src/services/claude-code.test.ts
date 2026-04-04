@@ -9,7 +9,7 @@ mock.module("fs", () => ({
 // --- Mock config ---
 mock.module("../config", () => ({
   getConfig: () => ({
-    claudeCodeTimeout: 5000,
+    claudeCodeTimeout: 500,
   }),
 }));
 
@@ -154,7 +154,7 @@ describe("runClaudeCode", () => {
     expect(result).toEqual({
       success: false,
       output: "",
-      error: "Claude Code timed out after 5000ms",
+      error: "Claude Code timed out after 500ms",
     });
     expect(killMock).toHaveBeenCalledTimes(1);
   });

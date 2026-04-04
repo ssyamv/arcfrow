@@ -15,14 +15,6 @@ mock.module("simple-git", () => ({
   default: () => gitMethods,
 }));
 
-// --- Mock fs ---
-mock.module("fs", () => ({
-  existsSync: () => true,
-  mkdirSync: () => undefined,
-  readFileSync: () => "file-content",
-  writeFileSync: () => undefined,
-}));
-
 // --- Mock config ---
 mock.module("../config", () => ({
   getConfig: () => ({

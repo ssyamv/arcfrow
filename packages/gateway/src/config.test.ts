@@ -22,15 +22,15 @@ describe("config", () => {
     const origOpenApi = process.env.DIFY_OPENAPI_API_KEY;
     const origBug = process.env.DIFY_BUG_ANALYSIS_API_KEY;
 
-    process.env.DIFY_API_KEY = "shared-key";
-    process.env.DIFY_TECH_DOC_API_KEY = "tech-doc-key";
-    process.env.DIFY_OPENAPI_API_KEY = "openapi-key";
-    process.env.DIFY_BUG_ANALYSIS_API_KEY = "bug-key";
+    process.env.DIFY_API_KEY = "dify-shared-val";
+    process.env.DIFY_TECH_DOC_API_KEY = "dify-techdoc-val";
+    process.env.DIFY_OPENAPI_API_KEY = "dify-openapi-val";
+    process.env.DIFY_BUG_ANALYSIS_API_KEY = "dify-bugfix-val";
 
     const config = getConfig();
-    expect(config.difyTechDocApiKey).toBe("tech-doc-key");
-    expect(config.difyOpenApiApiKey).toBe("openapi-key");
-    expect(config.difyBugAnalysisApiKey).toBe("bug-key");
+    expect(config.difyTechDocApiKey).toBe("dify-techdoc-val");
+    expect(config.difyOpenApiApiKey).toBe("dify-openapi-val");
+    expect(config.difyBugAnalysisApiKey).toBe("dify-bugfix-val");
 
     process.env.DIFY_API_KEY = origBase;
     process.env.DIFY_TECH_DOC_API_KEY = origTech;
@@ -47,12 +47,12 @@ describe("config", () => {
     delete process.env.DIFY_TECH_DOC_API_KEY;
     delete process.env.DIFY_OPENAPI_API_KEY;
     delete process.env.DIFY_BUG_ANALYSIS_API_KEY;
-    process.env.DIFY_API_KEY = "fallback-key";
+    process.env.DIFY_API_KEY = "dify-fallback-val";
 
     const config = getConfig();
-    expect(config.difyTechDocApiKey).toBe("fallback-key");
-    expect(config.difyOpenApiApiKey).toBe("fallback-key");
-    expect(config.difyBugAnalysisApiKey).toBe("fallback-key");
+    expect(config.difyTechDocApiKey).toBe("dify-fallback-val");
+    expect(config.difyOpenApiApiKey).toBe("dify-fallback-val");
+    expect(config.difyBugAnalysisApiKey).toBe("dify-fallback-val");
 
     process.env.DIFY_API_KEY = origBase;
     process.env.DIFY_TECH_DOC_API_KEY = origTech;
