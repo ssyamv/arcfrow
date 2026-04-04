@@ -51,7 +51,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="exec in store.executions" :key="exec.id" class="border-t border-gray-100">
+          <tr
+            v-for="exec in store.executions"
+            :key="exec.id"
+            class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+            @click="$router.push(`/workflows/${exec.id}`)"
+          >
             <td class="px-4 py-2.5">{{ exec.id }}</td>
             <td class="px-4 py-2.5">{{ typeLabel(exec.workflow_type) }}</td>
             <td class="px-4 py-2.5">{{ exec.trigger_source }}</td>

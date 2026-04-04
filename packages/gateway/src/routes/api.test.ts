@@ -88,6 +88,32 @@ describe("api routes", () => {
     expect(body.data.length).toBeGreaterThanOrEqual(1);
   });
 
+  it("GET /api/workflow/executions/:id returns single execution", async () => {
+    const { createWorkflowExecution } = await import("../db/queries");
+    const id = createWorkflowExecution({
+      workflow_type: "prd_to_tech",
+      trigger_source: "manual",
+      plane_issue_id: "ISSUE-DETAIL",
+    });
+
+    const res = await app.request(`/api/workflow/executions/${id}`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.id).toBe(id);
+    expect(body.workflow_type).toBe("prd_to_tech");
+    expect(body.plane_issue_id).toBe("ISSUE-DETAIL");
+  });
+
+  it("GET /api/workflow/executions/:id returns 404 for non-existent", async () => {
+    const res = await app.request("/api/workflow/executions/99999");
+    expect(res.status).toBe(404);
+  });
+
+  it("GET /api/workflow/executions/:id returns 400 for invalid id", async () => {
+    const res = await app.request("/api/workflow/executions/abc");
+    expect(res.status).toBe(400);
+  });
+
   it("GET /api/workflow/executions filters by type", async () => {
     const { createWorkflowExecution } = await import("../db/queries");
     createWorkflowExecution({

@@ -47,6 +47,23 @@ export interface VersionResponse {
   version: string;
 }
 
+export interface ExecutionDetail {
+  id: number;
+  workflow_type: string;
+  trigger_source: string;
+  plane_issue_id: string | null;
+  input_path: string | null;
+  status: string;
+  error_message: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export function fetchExecution(id: number): Promise<ExecutionDetail> {
+  return request<ExecutionDetail>(`/api/workflow/executions/${id}`);
+}
+
 export function fetchExecutions(filters?: {
   workflow_type?: string;
   status?: string;
