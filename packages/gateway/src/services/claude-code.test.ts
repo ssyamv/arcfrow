@@ -32,7 +32,7 @@ describe("runClaudeCode", () => {
   beforeEach(() => {
     writeFileSyncMock.mockClear();
     spawnMock = mock();
-    // @ts-ignore - mock Bun.spawn
+    // @ts-expect-error - mock Bun.spawn
     Bun.spawn = spawnMock;
   });
 
