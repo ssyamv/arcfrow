@@ -9,7 +9,8 @@ mock.module("../config", () => ({
   }),
 }));
 
-const { getAccessToken, _resetTokenCache } = await import("./ibuild");
+const { getAccessToken, getBuildDetail, getBuildLog, getFailedModules, _resetTokenCache } =
+  await import("./ibuild");
 
 const originalFetch = globalThis.fetch;
 
@@ -53,5 +54,153 @@ describe("getAccessToken", () => {
     _resetTokenCache();
 
     await expect(getAccessToken()).rejects.toThrow("iBuild token request failed: 500");
+  });
+});
+
+// ─── Task 3: Build Detail + Log Fetching + Failed Modules ─────────────────────
+
+describe("getBuildDetail", () => {
+  it("fetches build detail successfully", async () => {
+    const mockDetail = {
+      uuid: "uuid-1",
+      buildSid: "build-sid-1",
+      branch: "feat/PROJ-123",
+      commitNum: "abc123",
+      executor: "user1",
+      executorName: "User One",
+      executeTime: "2026-04-06T10:00:00Z",
+      duration: "120",
+      status: "SUCCESS",
+      modules: [
+        { moduleId: "mod-1", modulekey: "backend", status: "SUCCESS" },
+        { moduleId: "mod-2", modulekey: "frontend", status: "FAIL" },
+      ],
+      logUrl: "/logs/build-sid-1.log",
+    };
+
+    let callCount = 0;
+    globalThis.fetch = mock(async () => {
+      callCount++;
+      if (callCount === 1) {
+        // Token request
+        return new Response(JSON.stringify({ token: "cached-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      // Build detail request
+      return new Response(JSON.stringify({ resCode: "0", obj: mockDetail }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as unknown as typeof fetch;
+
+    _resetTokenCache();
+
+    const detail = await getBuildDetail("proj-1", "app-1", "build-sid-1");
+    expect(detail.buildSid).toBe("build-sid-1");
+    expect(detail.status).toBe("SUCCESS");
+    expect(detail.modules).toHaveLength(2);
+  });
+
+  it("throws when obj is null", async () => {
+    let callCount = 0;
+    globalThis.fetch = mock(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return new Response(JSON.stringify({ token: "cached-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ resCode: "404", obj: null }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as unknown as typeof fetch;
+
+    _resetTokenCache();
+
+    await expect(getBuildDetail("proj-1", "app-1", "missing-sid")).rejects.toThrow(
+      "Build missing-sid not found",
+    );
+  });
+});
+
+describe("getBuildLog", () => {
+  it("fetches build log via logUrl", async () => {
+    const logContent = "Build log line 1\nBuild log line 2\n";
+
+    let callCount = 0;
+    globalThis.fetch = mock(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return new Response(JSON.stringify({ token: "cached-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(logContent, {
+        status: 200,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }) as unknown as typeof fetch;
+
+    _resetTokenCache();
+
+    const log = await getBuildLog("/logs/build-sid-1.log");
+    expect(log).toBe(logContent);
+  });
+
+  it("truncates logs larger than 100KB with prefix", async () => {
+    // Create a log that is 150KB
+    const largeLog = "x".repeat(150 * 1024);
+
+    let callCount = 0;
+    globalThis.fetch = mock(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return new Response(JSON.stringify({ token: "cached-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(largeLog, {
+        status: 200,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }) as unknown as typeof fetch;
+
+    _resetTokenCache();
+
+    const log = await getBuildLog("/logs/large-build.log");
+    expect(log).toContain("[日志已截断，仅保留最后 100KB]");
+    // The final log should be the prefix + newline + last 100KB
+    const MAX_LOG_SIZE = 100 * 1024;
+    const expectedSuffix = largeLog.slice(-MAX_LOG_SIZE);
+    expect(log).toContain(expectedSuffix);
+    // The total length should be prefix length + 1 (newline) + 100KB
+    const prefix = "[日志已截断，仅保留最后 100KB]\n";
+    expect(log.length).toBe(prefix.length + MAX_LOG_SIZE);
+  });
+});
+
+describe("getFailedModules", () => {
+  it("extracts modulekeys for FAIL status modules", () => {
+    const modules = [
+      { moduleId: "m1", modulekey: "backend", status: "SUCCESS" },
+      { moduleId: "m2", modulekey: "frontend", status: "FAIL" },
+      { moduleId: "m3", modulekey: "mobile", status: "FAIL" },
+    ];
+    const failed = getFailedModules(modules);
+    expect(failed).toEqual(["frontend", "mobile"]);
+  });
+
+  it("returns empty array for empty modules list", () => {
+    expect(getFailedModules([])).toEqual([]);
+  });
+
+  it("returns empty array when modules is null", () => {
+    expect(getFailedModules(null)).toEqual([]);
   });
 });
