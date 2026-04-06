@@ -9,8 +9,14 @@ mock.module("../config", () => ({
   }),
 }));
 
-const { getAccessToken, getBuildDetail, getBuildLog, getFailedModules, _resetTokenCache } =
-  await import("./ibuild");
+const {
+  getAccessToken,
+  getBuildDetail,
+  getBuildLog,
+  getFailedModules,
+  extractIssueIdFromBranch,
+  _resetTokenCache,
+} = await import("./ibuild");
 
 const originalFetch = globalThis.fetch;
 
@@ -202,5 +208,41 @@ describe("getFailedModules", () => {
 
   it("returns empty array when modules is null", () => {
     expect(getFailedModules(null)).toEqual([]);
+  });
+});
+
+// ─── Task 4: Branch → Plane Issue ID Extraction ───────────────────────────────
+
+describe("extractIssueIdFromBranch", () => {
+  it("extracts issue ID from feat/ branch", () => {
+    expect(extractIssueIdFromBranch("feat/PROJ-123-add-login")).toBe("PROJ-123");
+  });
+
+  it("extracts issue ID from fix/ branch", () => {
+    expect(extractIssueIdFromBranch("fix/PROJ-456-fix-crash")).toBe("PROJ-456");
+  });
+
+  it("extracts issue ID from hotfix/ branch", () => {
+    expect(extractIssueIdFromBranch("hotfix/PROJ-789-urgent-patch")).toBe("PROJ-789");
+  });
+
+  it("extracts issue ID from feature/ branch", () => {
+    expect(extractIssueIdFromBranch("feature/BUG-42")).toBe("BUG-42");
+  });
+
+  it("returns null for master", () => {
+    expect(extractIssueIdFromBranch("master")).toBeNull();
+  });
+
+  it("returns null for develop", () => {
+    expect(extractIssueIdFromBranch("develop")).toBeNull();
+  });
+
+  it("returns null for release branch", () => {
+    expect(extractIssueIdFromBranch("release/v1.0")).toBeNull();
+  });
+
+  it("returns null for empty string", () => {
+    expect(extractIssueIdFromBranch("")).toBeNull();
   });
 });

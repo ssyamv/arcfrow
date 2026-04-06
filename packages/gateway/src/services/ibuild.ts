@@ -73,3 +73,10 @@ export function getFailedModules(modules: IBuildModule[] | null): string[] {
   if (!modules) return [];
   return modules.filter((m) => m.status === "FAIL").map((m) => m.modulekey);
 }
+
+const BRANCH_ISSUE_REGEX = /^(?:feat|fix|hotfix|feature)\/([A-Z]+-\d+)/;
+
+export function extractIssueIdFromBranch(branch: string): string | null {
+  const match = branch.match(BRANCH_ISSUE_REGEX);
+  return match ? match[1] : null;
+}
